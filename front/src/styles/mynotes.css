@@ -1,0 +1,193 @@
+/* Layout structure */
+.dashboard-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+  gap: 20px;
+  animation: fadeIn 1s ease;
+}
+
+/* Sidebar styling */
+.sidebar-wrapper {
+  width: 250px;
+}
+
+/* Main section where notes are displayed */
+.section {
+  flex: 1;
+  background: linear-gradient(145deg, #ffffff, #e6f0ff);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  position: relative;
+}
+
+.section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.section h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section h3 svg {
+  width: 24px;
+  height: 24px;
+  color: #4f46e5;
+}
+
+/* Button to toggle grid and list views */
+.view-toggle-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.toggle-btn {
+  padding: 10px 20px;
+  border: 1px solid #cbd5e1;
+  background-color: white;
+  color: #1e293b;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background-color: #e0e7ff;
+}
+
+.toggle-btn.active {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+}
+
+/* Notes layout control */
+.note-list.grid-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.note-list.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Note card styling */
+.note {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+  animation: slideIn 0.5s ease;
+}
+
+.note:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.note h4 {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #111827;
+}
+
+.note p {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+.note span {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Pin and special category backgrounds */
+.reminder {
+  background: linear-gradient(to right, #fef3c7, #fde68a);
+}
+
+.pinned {
+  background: linear-gradient(to right, #e0e7ff, #c7d2fe);
+}
+
+.recent {
+  background: linear-gradient(to right, #d1fae5, #a7f3d0);
+}
+
+/* Button styles inside card */
+.btn-pin,
+.btn-edit,
+.btn-trash {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-pin {
+  background-color: #fefcbf;
+  color: #92400e;
+}
+
+.btn-pin:hover {
+  background-color: #fde68a;
+}
+
+.btn-edit {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.btn-edit:hover {
+  background-color: #bfdbfe;
+}
+
+.btn-trash {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.btn-trash:hover {
+  background-color: #fecaca;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+  }
+
+  .section {
+    width: 100%;
+  }
+}

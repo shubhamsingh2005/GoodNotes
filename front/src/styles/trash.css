@@ -1,0 +1,33 @@
+/* src/styles/trash.css */
+
+.trash {
+    margin-left: 250px;
+    padding-top: 60px;
+    padding: 20px;
+  }
+  
+  .trash .item {
+    background-color: #f4f4f4;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+  
+  .trash .item h4 {
+    margin: 0;
+  }
+  
+  .trash .item p {
+    color: #555;
+  }
+  
+  .trash button {
+    margin-right: 10px;
+    padding: 10px 15px;
+    background-color: #ff6f61;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  

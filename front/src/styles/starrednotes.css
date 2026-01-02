@@ -1,0 +1,23 @@
+/* src/styles/starrednotes.css */
+
+.starred-notes {
+    margin-left: 250px;
+    padding-top: 60px;
+    padding: 20px;
+  }
+  
+  .starred-notes .note {
+    background-color: #f4f4f4;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+  
+  .starred-notes .note h4 {
+    margin: 0;
+  }
+  
+  .starred-notes .note p {
+    color: #555;
+  }
+  

@@ -1,0 +1,91 @@
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Provider } from 'react-redux';
+
+// Styles
+import '@/App.css';
+import '@/index.css';
+
+// Layout
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Pages
+import LandingPage from './pages/LandingPage';
+import SignIn from './pages/Signin';
+import SignUp from './pages/Signup';
+import Home from './pages/Home';
+import NoteEditor from './components/NoteEditor';
+
+// Sidebar Pages
+import MyNotes from './pages/SidebarComponents/MyNotes';
+import AddNote from './pages/SidebarComponents/AddNote';
+import Folders from './pages/SidebarComponents/Folders';
+import StarredNotes from './pages/SidebarComponents/StarredNotes';
+import Tags from './pages/SidebarComponents/Tags';
+import SharedWithMe from './pages/SidebarComponents/SharedWithMe';
+import Search from './pages/SidebarComponents/Search';
+import Help from './pages/SidebarComponents/Help';
+import Trash from './pages/SidebarComponents/Trash';
+
+// Context & State
+import store from '@/redux/store';
+import { SidebarProvider } from './context/SidebarContext';
+import { DarkModeProvider } from './context/DarkModeContext';
+import { NoteProvider } from './context/NoteContext';
+import { AuthProvider } from './context/AuthContext';
+
+// Toast
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+const App: React.FC = () => {
+  return (
+    <Provider store={store}>
+      <AuthProvider>
+        <DarkModeProvider>
+          <SidebarProvider>
+            <NoteProvider>
+              <Router>
+                <div className="w-full h-full m-0 p-0 font-sans text-gray-900 dark:text-gray-100">
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/signup" element={<SignUp />} />
+
+                    {/* Protected Routes wrapped in Layout */}
+                    <Route element={<ProtectedRoute />}>
+                      <Route element={<Layout />}>
+                        {/* The Layout component contains the Sidebar and Header */}
+                        <Route path="/home" element={<Home />} />
+                        <Route path="/note-editor" element={<NoteEditor />} />
+                        
+                        {/* Sidebar Pages */}
+                        <Route path="/my-notes" element={<MyNotes />} />
+                        <Route path="/add-note" element={<AddNote />} />
+                        <Route path="/folders" element={<Folders />} />
+                        <Route path="/starred-notes" element={<StarredNotes />} />
+                        <Route path="/tags" element={<Tags />} />
+                        <Route path="/shared-with-me" element={<SharedWithMe />} />
+                        <Route path="/search" element={<Search />} />
+                        <Route path="/help" element={<Help />} />
+                        <Route path="/trash" element={<Trash />} />
+                      </Route>
+                    </Route>
+
+                    {/* Redirects */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                  <ToastContainer theme="colored" position="bottom-right" />
+                </div>
+              </Router>
+            </NoteProvider>
+          </SidebarProvider>
+        </DarkModeProvider>
+      </AuthProvider>
+    </Provider>
+  );
+};
+
+export default App;

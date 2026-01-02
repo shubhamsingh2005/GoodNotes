@@ -1,0 +1,36 @@
+/* src/styles/folders.css */
+
+.folders {
+    margin-left: 250px;
+    padding-top: 60px;
+    padding: 20px;
+  }
+  
+  .folders input {
+    padding: 10px;
+    margin-bottom: 10px;
+    width: 80%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .folders button {
+    padding: 10px 20px;
+    background-color: #ff6f61;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .folder-list {
+    margin-top: 20px;
+  }
+  
+  .folder {
+    background-color: #f4f4f4;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+  

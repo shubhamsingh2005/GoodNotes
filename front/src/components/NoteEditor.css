@@ -1,0 +1,52 @@
+/* Remove the left and right margin and ensure full width */
+.menu-bar {
+  margin-bottom: 10px;
+  margin-left: 0; /* Ensure no left margin */
+  margin-right: 0; /* Ensure no right margin */
+}
+
+.menu-bar button {
+  margin-right: 5px;
+  padding: 5px 10px;
+}
+
+/* Make the active button stand out */
+.menu-bar button.is-active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Update for the note editor */
+.note-editor {
+  border: 1px solid #ccc;
+  padding: 15px;
+  min-height: 300px;
+  width: 100%;  /* Ensure the editor takes the full width */
+  margin-left: 0; /* No left margin */
+  margin-right: 0; /* No right margin */
+  box-sizing: border-box; /* Include padding/border in width calculation */
+}
+
+/* For any page container that wraps the sidebar and content */
+.page-container {
+  display: flex;
+  width: 100%;
+  margin-left: 0;  /* Ensure no left margin */
+  margin-right: 0; /* Ensure no right margin */
+  padding: 0; /* Remove padding if any */
+}
+
+/* Adjust for the sidebar to ensure no unwanted space */
+.sidebar {
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+  width: 250px; /* Adjust based on your sidebar width */
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  background-color: #f4f4f4;
+  /* Optional: Remove margin if there is one */
+  margin-left: 0;
+  padding-left: 0;
+  box-sizing: border-box;
+}

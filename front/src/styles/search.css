@@ -1,0 +1,29 @@
+/* src/styles/search.css */
+
+.search {
+    margin-left: 250px;
+    padding-top: 60px;
+    padding: 20px;
+  }
+  
+  .search input {
+    padding: 10px;
+    width: 80%;
+    margin-right: 10px;
+  }
+  
+  .search button {
+    padding: 10px;
+    background-color: #ff6f61;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+  
+  .search .note {
+    background-color: #f4f4f4;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+  }
+  
