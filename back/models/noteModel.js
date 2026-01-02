@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const noteSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true, // Title is mandatory
+    required: true, 
   },
   subtitle: {
     type: String,
@@ -11,14 +11,22 @@ const noteSchema = new mongoose.Schema({
   },
   content: {
     type: String,
-    required: true, // Content is essential for the note
+    required: true, 
   },
   folder: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Folder', // Reference to Folder model
-    required: true, // Each note must belong to a folder
+    ref: 'Folder', 
+    required: false, 
   },
   isPinned: {
+    type: Boolean,
+    default: false,
+  },
+  isStarred: { 
+    type: Boolean,
+    default: false,
+  },
+  isTrashed: { // Added Soft Delete flag
     type: Boolean,
     default: false,
   },
@@ -28,21 +36,21 @@ const noteSchema = new mongoose.Schema({
   },
   reminderDate: {
     type: Date,
-    required: false, // Optional reminder date
+    required: false,
     default: null,
   },
   colorPriority: {
     type: String,
     required: false,
-    default: '', // Optional, but defaults to empty string
+    default: '', 
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // Reference to User model
-    required: true, // Each note must belong to a user
+    ref: 'User', 
+    required: true, 
   },
 }, {
-  timestamps: true, // Adds createdAt and updatedAt fields automatically
+  timestamps: true, 
 });
 
 const Note = mongoose.model('Note', noteSchema);

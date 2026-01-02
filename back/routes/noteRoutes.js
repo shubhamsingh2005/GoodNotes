@@ -1,13 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const { createNote, getNotes, deleteNote, updateNote, pinNote, setReminder } = require('../controllers/noteController');
+const { 
+  createNote, 
+  getNotes, 
+  deleteNote, 
+  updateNote, 
+  pinNote, 
+  starNote, 
+  setReminder,
+  restoreNote,
+  deleteNotePermanently
+} = require('../controllers/noteController');
+const auth = require('../middware/authMiddleware');
 
-// Define your routes with correct handler functions
-router.post('/', createNote); // This should be a function like `createNote`
-router.get('/', getNotes); // This should be a function like `getNotes`
-router.delete('/:id', deleteNote); // This should be a function like `deleteNote`
-router.put('/:id', updateNote); // This should be a function like `updateNote`
-router.patch('/:id/pin', pinNote); // This should be a function like `pinNote`
-router.patch('/:id/reminder', setReminder); // This should be a function like `setReminder`
+router.use(auth);
+
+// CRUD
+router.post('/', createNote);
+router.get('/', getNotes); // Handles ?trash=true
+router.delete('/:id', deleteNote); // Soft delete
+router.put('/:id', updateNote);
+
+// Actions
+router.patch('/:id/pin', pinNote);
+router.patch('/:id/star', starNote);
+router.patch('/:id/reminder', setReminder);
+router.patch('/:id/restore', restoreNote); // Restore from trash
+router.delete('/:id/permanent', deleteNotePermanently); // Hard delete
 
 module.exports = router;

@@ -5,12 +5,16 @@ const {
   getFolders,
   getFolderNotes,
   deleteFolder,
-} = require('../controllers/folderController');  // Make sure this is correct
+} = require('../controllers/folderController');
+const auth = require('../middware/authMiddleware');
+
+// Apply auth middleware to all routes
+router.use(auth);
 
 // Routes
-router.post('/', createFolder); // Create folder
-router.get('/', getFolders); // Get all folders
-router.get('/:id/notes', getFolderNotes); // Get notes by folder
-router.delete('/:id', deleteFolder); // Delete folder
+router.post('/', createFolder); 
+router.get('/', getFolders); 
+router.get('/:id/notes', getFolderNotes); 
+router.delete('/:id', deleteFolder); 
 
 module.exports = router;

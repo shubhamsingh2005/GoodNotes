@@ -5,22 +5,33 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
 dotenv.config();
+
+// Connect to Database
 connectDB();
 
 const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: 'http://localhost:5173', // frontend URL
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Allow env var for production
   credentials: true,
 }));
 app.use(express.json());
 
 // Routes
 app.use('/api', require('./routes/authRoutes'));
-app.use('/api/notes', require('./routes/noteRoutes')); // ✅ Notes route
-app.use('/api/folders', require('./routes/folderRoutes')); // ✅ Folders route
+app.use('/api/notes', require('./routes/noteRoutes'));
+app.use('/api/folders', require('./routes/folderRoutes'));
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Server Error',
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
