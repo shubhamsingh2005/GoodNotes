@@ -2,7 +2,7 @@ const Note = require('../models/noteModel');
 
 // Create a new note
 const createNote = async (req, res) => {
-  const { title, subtitle, content, folder, isPinned, isStarred, isReminder, colorPriority } = req.body;
+  const { title, subtitle, content, folder, tags, isPinned, isStarred, isReminder, reminderDate, colorPriority } = req.body;
 
   try {
     const note = await Note.create({
@@ -10,9 +10,11 @@ const createNote = async (req, res) => {
       subtitle,
       content,
       folder: folder || null, 
+      tags: tags || [], 
       isPinned,
       isStarred,
       isReminder,
+      reminderDate, 
       colorPriority,
       user: req.user.id, 
     });
@@ -23,23 +25,23 @@ const createNote = async (req, res) => {
   }
 };
 
-// Get all notes (Active only, unless ?trash=true)
+// Get all notes 
 const getNotes = async (req, res) => {
   try {
     const { search, trash } = req.query;
     let query = { user: req.user.id };
 
-    // If trash=true, show only trashed notes. Else show only active notes.
     if (trash === 'true') {
         query.isTrashed = true;
     } else {
-        query.isTrashed = false; // Default: Hide trash
+        query.isTrashed = false; 
     }
 
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } }
+        { content: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } } 
       ];
     }
 
@@ -50,17 +52,13 @@ const getNotes = async (req, res) => {
   }
 };
 
-// Soft Delete a note (Move to Trash)
+// Delete Note (Soft)
 const deleteNote = async (req, res) => {
   try {
     const note = await Note.findOne({ _id: req.params.id, user: req.user.id });
-    if (!note) {
-      return res.status(404).json({ message: 'Note not found or unauthorized' });
-    }
-
+    if (!note) return res.status(404).json({ message: 'Note not found' });
     note.isTrashed = true;
     await note.save();
-
     res.json({ message: 'Note moved to trash' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -72,7 +70,6 @@ const restoreNote = async (req, res) => {
     try {
       const note = await Note.findOne({ _id: req.params.id, user: req.user.id });
       if (!note) return res.status(404).json({ message: 'Note not found' });
-      
       note.isTrashed = false;
       await note.save();
       res.json({ message: 'Note restored' });
@@ -92,7 +89,7 @@ const deleteNotePermanently = async (req, res) => {
     }
 };
 
-// Update a note
+// Update Note
 const updateNote = async (req, res) => {
   try {
     const note = await Note.findOneAndUpdate(
@@ -107,12 +104,11 @@ const updateNote = async (req, res) => {
   }
 };
 
-// Pin a note
+// Pin Note
 const pinNote = async (req, res) => {
   try {
     const note = await Note.findOne({ _id: req.params.id, user: req.user.id });
     if (!note) return res.status(404).json({ message: 'Note not found' });
-    
     note.isPinned = !note.isPinned; 
     await note.save();
     res.json(note);
@@ -121,12 +117,11 @@ const pinNote = async (req, res) => {
   }
 };
 
-// Star a note
+// Star Note
 const starNote = async (req, res) => {
   try {
     const note = await Note.findOne({ _id: req.params.id, user: req.user.id });
     if (!note) return res.status(404).json({ message: 'Note not found' });
-    
     note.isStarred = !note.isStarred; 
     await note.save();
     res.json(note);
@@ -135,13 +130,12 @@ const starNote = async (req, res) => {
   }
 };
 
-// Set a reminder
+// Set Reminder
 const setReminder = async (req, res) => {
   const { reminderDate } = req.body; 
   try {
     const note = await Note.findOne({ _id: req.params.id, user: req.user.id });
     if (!note) return res.status(404).json({ message: 'Note not found' });
-    
     note.isReminder = true;
     note.reminderDate = reminderDate;
     await note.save();
@@ -151,4 +145,42 @@ const setReminder = async (req, res) => {
   }
 };
 
-module.exports = { createNote, getNotes, deleteNote, updateNote, pinNote, starNote, setReminder, restoreNote, deleteNotePermanently };
+// --- Sharing Logic ---
+
+// Generate Share Code
+const shareNote = async (req, res) => {
+    try {
+        const note = await Note.findOne({ _id: req.params.id, user: req.user.id });
+        if (!note) return res.status(404).json({ message: 'Note not found' });
+
+        // Generate 4-digit code (simple)
+        const code = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        note.shareCode = code;
+        await note.save();
+        
+        res.json({ shareCode: code });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Fetch Shared Note by Code
+const getSharedNote = async (req, res) => {
+    try {
+        const { code } = req.params;
+        if (!code) return res.status(400).json({ message: 'Code required' });
+
+        // Find note by code (Ignore User Check!)
+        const note = await Note.findOne({ shareCode: code });
+        
+        if (!note) return res.status(404).json({ message: 'Invalid code or note not found' });
+
+        // Only return necessary fields? Or all?
+        res.json(note);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { createNote, getNotes, deleteNote, updateNote, pinNote, starNote, setReminder, restoreNote, deleteNotePermanently, shareNote, getSharedNote };

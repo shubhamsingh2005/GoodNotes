@@ -1,48 +1,120 @@
-import React, { useEffect, useState } from 'react';
-import { noteService } from '../../services/noteService';
-import { FaShareAlt } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { useNoteContext } from '../../context/NoteContext';
+import { FaShareAlt, FaSearch, FaRegFileAlt, FaQuoteRight } from 'react-icons/fa';
 
-const SharedWithMe = () => {
-  const [sharedNotes, setSharedNotes] = useState<any[]>([]);
+const SharedWithMe: React.FC = () => {
+  const { getSharedNote } = useNoteContext();
+  const [code, setCode] = useState('');
+  const [note, setNote] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchSharedNotes = async () => {
-      try {
-        const notes = await noteService.getSharedNotes();
-        setSharedNotes(notes);
-      } catch (error) {
-        console.error('Failed to fetch shared notes', error);
-      }
-    };
-    fetchSharedNotes();
-  }, []);
+  const handleFetch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code || code.length !== 4) {
+        setError("Please enter a valid 4-digit code.");
+        return;
+    }
+    setError('');
+    setLoading(true);
+    setNote(null);
+    try {
+        const fetchedNote = await getSharedNote(code);
+        setNote(fetchedNote);
+    } catch (err: any) {
+        setError(err.response?.data?.message || "Note not found or invalid code.");
+    } finally {
+        setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
-         <FaShareAlt className="text-blue-500" /> Shared with Me
-      </h2>
+    <div className="flex flex-col h-full w-full items-center p-6 overflow-y-auto scrollbar-thin">
       
-      <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">
-        {sharedNotes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sharedNotes.map((note) => (
-              <div key={note._id || note.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <h3 className="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">{note.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 mb-4">{note.content}</p>
-                <div className="text-xs text-blue-500 font-medium bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded w-fit">
-                    Shared by: {note.sharedBy || 'Unknown'}
-                </div>
-              </div>
-            ))}
+      {/* Header Section */}
+      <div className="text-center mb-8 max-w-lg animate-fade-in-down">
+          <div className="bg-purple-100 dark:bg-purple-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-purple-600">
+             <FaShareAlt size={28} />
           </div>
-        ) : (
-          <div className="text-center text-gray-500 mt-20">
-            <FaShareAlt className="text-6xl text-gray-200 mx-auto mb-4" />
-            <p className="text-lg">No notes shared with you yet.</p>
-          </div>
-        )}
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+            Shared Notes Access
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+              Enter the unique 4-digit code provided by the note owner to securely view their content.
+          </p>
       </div>
+
+      {/* Input Card */}
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 w-full max-w-md animate-fade-in-up">
+          <form onSubmit={handleFetch} className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Enter Share Code
+                  </label>
+                  <div className="relative">
+                      <input
+                        type="text"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        placeholder="0000"
+                        className="w-full text-center text-4xl font-mono font-bold tracking-[0.5em] py-4 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white focus:border-purple-500 focus:ring-0 focus:outline-none transition-all placeholder-gray-300 dark:placeholder-gray-700"
+                      />
+                  </div>
+              </div>
+              
+              <button 
+                type="submit" 
+                disabled={loading || code.length !== 4}
+                className="w-full bg-purple-600 text-white py-3 rounded-xl font-bold text-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              >
+                {loading ? <span className="animate-pulse">Searching...</span> : (
+                    <>
+                        <FaSearch size={18} /> Fetch Note
+                    </>
+                )}
+              </button>
+              
+              {error && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg text-center font-medium animate-shake">
+                      {error}
+                  </div>
+              )}
+          </form>
+      </div>
+
+      {/* Note Display Section */}
+      {note && (
+          <div className="mt-12 w-full max-w-3xl animate-fade-in-up">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  {/* Decorative Header */}
+                  <div className="bg-gradient-to-r from-purple-600 to-blue-500 p-1"></div>
+                  
+                  <div className="p-8 md:p-10">
+                      <div className="flex items-center gap-2 mb-6 text-purple-600 dark:text-purple-400 font-bold uppercase text-xs tracking-widest border-b border-gray-100 dark:border-gray-700 pb-4">
+                          <FaRegFileAlt /> Preview Mode
+                      </div>
+                      
+                      <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">
+                          {note.title}
+                      </h1>
+                      
+                      {/* Note Content */}
+                      <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                          <div dangerouslySetInnerHTML={{ __html: note.content }} />
+                      </div>
+                      
+                      {/* Footer Metadata */}
+                      <div className="mt-10 pt-6 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row justify-between text-sm text-gray-400 gap-2">
+                          <span className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                              Shared by User ID: <span className="font-mono text-gray-500 dark:text-gray-300">{note.user}</span>
+                          </span>
+                          <span>Shared on: {new Date(note.createdAt).toLocaleDateString()}</span>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };

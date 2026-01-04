@@ -5,10 +5,15 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['user', 'admin'], default: 'user' } // Added Role
+  pic: { // Profile Picture (Base64 or URL)
+    type: String,
+    required: false,
+    default: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+  },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }
 }, { timestamps: true });
 
-// Hash password before saving the user
+// Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
@@ -17,8 +22,9 @@ userSchema.pre('save', async function (next) {
 });
 
 // Method to compare password
-userSchema.methods.comparePassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
+// Renamed to matchPassword to match the controller call
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 module.exports = mongoose.model('User', userSchema);

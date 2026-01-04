@@ -13,7 +13,7 @@ const SignIn: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { login } = useAuth(); // Use Auth Context
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,15 +24,23 @@ const SignIn: React.FC = () => {
       const response = await API.post('/login', { email, password });
       
       if (response.data.success) {
-        // Save token and user info via Context
         login(response.data.token, response.data.user);
         navigate('/home');
       } else {
         setError(response.data.message || 'Login failed');
       }
     } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Invalid email or password');
+      console.error('Login Error Object:', err);
+      
+      const serverMessage = err.response?.data?.message || err.message || 'Unknown Error';
+      console.error('SERVER RESPONSE MESSAGE:', serverMessage);
+      
+      setError(serverMessage);
+      
+      // Force alert for debugging if it's a 500
+      if (err.response?.status === 500) {
+          alert(`Login Failed: ${serverMessage}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +62,7 @@ const SignIn: React.FC = () => {
           Your Personal Notes Manager.
         </p>
 
-        {error && <p className="text-red-500 text-center mb-4 text-sm bg-red-50 p-2 rounded">{error}</p>}
+        {error && <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4 text-red-700 text-sm">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <label className="text-sm font-semibold text-gray-700 mb-1 block">Email</label>

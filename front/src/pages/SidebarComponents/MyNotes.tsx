@@ -1,41 +1,60 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useNoteContext } from '../../context/NoteContext'; // Use Context, not Redux
-import { FaThLarge, FaList, FaMapPin, FaTrash, FaEdit } from 'react-icons/fa';
+import { useNoteContext } from '../../context/NoteContext'; 
+import { FaThLarge, FaList, FaMapPin, FaTrash, FaEdit, FaShareAlt } from 'react-icons/fa';
+import ShareModal from '../../components/ShareModal';
+import clsx from 'classnames';
 
 const MyNotes: React.FC = () => {
-  const { notes, pinNoteById, deleteNoteById } = useNoteContext(); // Get data/actions from Context
+  const { notes, pinNoteById, deleteNoteById, generateShareCode } = useNoteContext(); 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  // Filter out trashed notes (assuming backend handles trash or we filter here)
-  // Current context implementation might rely on backend to not return trashed notes, 
-  // or we filter by `isTrashed` if the model has it.
-  // The updated NoteModel didn't strictly have "isTrashed", so delete usually means DELETE.
-  // However, users expect "Move to Trash". 
-  // For now, let's assume 'deleteNoteById' does the deletion/trash logic.
   
+  // Share State
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [currentShareCode, setCurrentShareCode] = useState<string | null>(null);
+
   const pinnedNotes = notes.filter((note: any) => note.isPinned);
   const unPinnedNotes = notes.filter((note: any) => !note.isPinned);
-  
-  // Combine: Pinned first
   const displayNotes = [...pinnedNotes, ...unPinnedNotes];
+
+  const handleShare = async (e: React.MouseEvent, note: any) => {
+      e.preventDefault();
+      e.stopPropagation(); 
+      try {
+          let code = note.shareCode;
+          if (!code) {
+              const data = await generateShareCode(note.id || note._id);
+              code = data.shareCode;
+          }
+          setCurrentShareCode(code);
+          setShareModalOpen(true);
+      } catch (err) {
+          alert("Failed to share note");
+      }
+  };
 
   return (
     <div className="flex flex-col h-full">
+      <ShareModal 
+        isOpen={shareModalOpen} 
+        onClose={() => setShareModalOpen(false)} 
+        shareCode={currentShareCode} 
+      />
+
       {/* Toolbar */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">My Notes</h2>
         <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
           <button
             onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow text-purple-600' : 'text-gray-500'}`}
+            className={clsx("p-2 rounded-md transition-all", viewMode === 'grid' ? "bg-white dark:bg-gray-600 shadow text-purple-600" : "text-gray-500")}
             title="Grid View"
           >
             <FaThLarge />
           </button>
           <button
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow text-purple-600' : 'text-gray-500'}`}
+            className={clsx("p-2 rounded-md transition-all", viewMode === 'list' ? "bg-white dark:bg-gray-600 shadow text-purple-600" : "text-gray-500")}
             title="List View"
           >
             <FaList />
@@ -46,26 +65,35 @@ const MyNotes: React.FC = () => {
       {/* Content */}
       <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">
         {displayNotes.length > 0 ? (
-          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-4'}>
+          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-3'}>
             {displayNotes.map((note: any) => (
               <div 
                 key={note.id || note._id} 
-                className="group bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all relative flex flex-col h-48"
+                className={clsx(
+                    "group bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all relative flex",
+                    viewMode === 'grid' ? "flex-col h-48" : "flex-row items-center h-20 gap-4"
+                )}
               >
-                {/* Note Header */}
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-lg font-bold text-gray-800 dark:text-gray-100 line-clamp-1">{note.title}</h4>
-                  {note.isPinned && <FaMapPin className="text-purple-500 flex-shrink-0" />}
+                {/* Note Header / Title */}
+                <div className={clsx("flex justify-between items-start", viewMode === 'grid' ? "w-full mb-2" : "w-1/4 mb-0")}>
+                  <h4 className="text-lg font-bold text-gray-800 dark:text-gray-100 line-clamp-1 truncate">{note.title}</h4>
+                  {note.isPinned && viewMode === 'grid' && <FaMapPin className="text-purple-500 flex-shrink-0" />}
                 </div>
 
                 {/* Note Content Preview */}
                 <div 
-                  className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3 flex-1"
+                  className={clsx(
+                      "text-gray-600 dark:text-gray-400 text-sm",
+                      viewMode === 'grid' ? "mb-4 line-clamp-3 flex-1" : "line-clamp-1 flex-1 mb-0"
+                  )}
                   dangerouslySetInnerHTML={{ __html: note.content || '' }} 
                 />
 
-                {/* Actions (visible on hover) */}
-                <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity mt-auto">
+                {/* Actions */}
+                <div className={clsx(
+                    "flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10",
+                    viewMode === 'grid' ? "justify-end mt-auto" : "justify-end"
+                )}>
                    <button 
                      onClick={(e) => { e.preventDefault(); pinNoteById(note.id || note._id, !note.isPinned); }}
                      className={`text-sm hover:text-purple-600 ${note.isPinned ? 'text-purple-500' : 'text-gray-400'}`}
@@ -74,7 +102,15 @@ const MyNotes: React.FC = () => {
                      <FaMapPin />
                    </button>
                    
-                   <Link to={`/note-editor`} state={{ note }} className="text-gray-400 hover:text-blue-500 text-sm" title="Edit">
+                   <button 
+                     onClick={(e) => handleShare(e, note)}
+                     className="text-gray-400 hover:text-green-500 text-sm"
+                     title="Share"
+                   >
+                     <FaShareAlt />
+                   </button>
+
+                   <Link to="/note-editor" state={{ note }} className="text-gray-400 hover:text-blue-500 text-sm" title="Edit">
                      <FaEdit />
                    </Link>
                    
@@ -86,6 +122,9 @@ const MyNotes: React.FC = () => {
                      <FaTrash />
                    </button>
                 </div>
+                
+                {/* Link Overlay */}
+                <Link to="/note-editor" state={{ note }} className="absolute inset-0 z-0" />
               </div>
             ))}
           </div>

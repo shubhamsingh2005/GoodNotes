@@ -1,96 +1,112 @@
 import React, { useEffect, useState } from 'react';
 import { useNoteContext } from '@/context/NoteContext';
-import { motion } from 'framer-motion';
-import '@/styles/dashboard.css';
-import { MdNotificationsActive, MdOutlinePushPin, MdUpdate } from 'react-icons/md';
-
-interface Note {
-  id: string;
-  title: string;
-  subtitle?: string;
-  reminder?: string | null;
-  pinned?: boolean;
-  updatedAt?: string;
-  date?: string;
-}
+import { useAuth } from '@/context/AuthContext';
+import { Link } from 'react-router-dom';
+import { FaStickyNote, FaBell, FaStar, FaClock, FaPlus } from 'react-icons/fa';
 
 const Dashboard: React.FC = () => {
   const { notes, fetchNotes } = useNoteContext();
-  const [reminders, setReminders] = useState<Note[]>([]);
-  const [pinnedNotes, setPinnedNotes] = useState<Note[]>([]);
-  const [recentlyEdited, setRecentlyEdited] = useState<Note[]>([]);
+  const { user } = useAuth();
+  
+  const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
-    fetchNotes(); // Load all notes when Dashboard mounts
+    fetchNotes();
+    
+    // Set greeting based on time
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good Morning');
+    else if (hour < 18) setGreeting('Good Afternoon');
+    else setGreeting('Good Evening');
   }, []);
 
-  useEffect(() => {
-    setReminders(notes.filter(note => note.reminder != null));
-    setPinnedNotes(notes.filter(note => note.pinned === true));
-    setRecentlyEdited(
-      notes.filter(note => {
-        const time = new Date(note.updatedAt || note.date || '').getTime();
-        return time > Date.now() - 1000 * 60 * 60 * 24; // last 24 hours
-      })
-    );
-  }, [notes]);
-
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
-  };
-
-  const Section = ({
-    title,
-    items,
-    icon: Icon,
-  }: {
-    title: string;
-    items: Note[];
-    icon: React.ElementType;
-  }) => (
-    <motion.div
-      className="flex-1 p-6 m-4 rounded-3xl shadow-2xl text-white min-w-[30%]"
-      variants={sectionVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <div className="flex items-center mb-6 border-b-2 border-white pb-3">
-        <Icon className="text-3xl mr-3 animate-pulse" />
-        <h3 className="text-3xl font-bold">{title}</h3>
-      </div>
-      {items.length > 0 ? (
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-          {items.map(note => (
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              key={note.id}
-              className="bg-white bg-opacity-20 backdrop-blur-lg p-4 rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer"
-            >
-              <h4 className="font-bold text-lg">{note.title}</h4>
-              <p className="text-sm">{note.subtitle || 'No subtitle'}</p>
-              {note.reminder && (
-                <span className="text-xs block mt-1 text-yellow-200">
-                  Reminder: {new Date(note.reminder).toLocaleString()}
-                </span>
-              )}
-              <span className="text-xs text-gray-200 block mt-1">
-                Updated: {new Date(note.updatedAt || note.date || '').toLocaleString()}
-              </span>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-white opacity-70">No {title.toLowerCase()} found.</p>
-      )}
-    </motion.div>
-  );
+  // Calculate Stats
+  // Support both property names (isPinned/pinned) just in case
+  const pinnedCount = notes.filter((n: any) => n.isPinned || n.pinned).length;
+  const reminderCount = notes.filter((n: any) => n.isReminder || n.reminder).length;
+  
+  // Recent edits: updated in last 24h
+  const recentCount = notes.filter((n: any) => {
+      const date = new Date(n.updatedAt || n.date || 0);
+      const now = new Date();
+      const diff = now.getTime() - date.getTime();
+      return diff < 24 * 60 * 60 * 1000; 
+  }).length;
 
   return (
-    <div className="flex flex-wrap justify-between w-full min-h-screen bg-gray-900 p-8">
-      <Section title="Reminders" items={reminders} icon={MdNotificationsActive} />
-      <Section title="Pinned Notes" items={pinnedNotes} icon={MdOutlinePushPin} />
-      <Section title="Recently Edited" items={recentlyEdited} icon={MdUpdate} />
+    <div className="flex flex-col gap-6">
+      {/* Header / Greeting */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+            {greeting}, <span className="text-purple-600 dark:text-purple-400">{user?.name || 'Friend'}</span>!
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Here is what's happening with your notes today.
+          </p>
+        </div>
+        <Link 
+            to="/note-editor" 
+            className="flex items-center gap-2 bg-purple-600 text-white px-5 py-3 rounded-full font-semibold shadow-lg hover:bg-purple-700 transition-all hover:scale-105"
+        >
+            <FaPlus /> Create Note
+        </Link>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Total Notes */}
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between h-32 hover:border-purple-200 dark:hover:border-purple-900 transition-colors">
+            <div className="flex justify-between items-start">
+                <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
+                    <FaStickyNote size={20} />
+                </div>
+                <span className="text-2xl font-bold text-gray-800 dark:text-white">{notes.length}</span>
+            </div>
+            <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Notes</p>
+            </div>
+        </div>
+
+        {/* Pinned */}
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between h-32 hover:border-purple-200 dark:hover:border-purple-900 transition-colors">
+            <div className="flex justify-between items-start">
+                <div className="p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg text-yellow-500 dark:text-yellow-400">
+                    <FaStar size={20} />
+                </div>
+                <span className="text-2xl font-bold text-gray-800 dark:text-white">{pinnedCount}</span>
+            </div>
+            <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pinned Notes</p>
+            </div>
+        </div>
+
+        {/* Reminders */}
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between h-32 hover:border-purple-200 dark:hover:border-purple-900 transition-colors">
+            <div className="flex justify-between items-start">
+                <div className="p-2 bg-red-50 dark:bg-red-900/30 rounded-lg text-red-500 dark:text-red-400">
+                    <FaBell size={20} />
+                </div>
+                <span className="text-2xl font-bold text-gray-800 dark:text-white">{reminderCount}</span>
+            </div>
+            <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Reminders</p>
+            </div>
+        </div>
+
+        {/* Recently Edited */}
+        <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between h-32 hover:border-purple-200 dark:hover:border-purple-900 transition-colors">
+            <div className="flex justify-between items-start">
+                <div className="p-2 bg-green-50 dark:bg-green-900/30 rounded-lg text-green-500 dark:text-green-400">
+                    <FaClock size={20} />
+                </div>
+                <span className="text-2xl font-bold text-gray-800 dark:text-white">{recentCount}</span>
+            </div>
+            <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Edited Today</p>
+            </div>
+        </div>
+      </div>
     </div>
   );
 };

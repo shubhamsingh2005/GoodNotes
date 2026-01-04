@@ -1,216 +1,252 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { FaBold, FaItalic, FaUnderline, FaStrikethrough, FaSuperscript, FaSubscript, FaAlignLeft, FaAlignCenter, FaAlignRight, FaAlignJustify, FaListUl, FaListOl, FaSave } from 'react-icons/fa';
-import { useNoteContext } from '../context/NoteContext'; // Use Note Context
+import React, { useState, useEffect } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
+import Placeholder from '@tiptap/extension-placeholder';
+import { useNoteContext } from '../context/NoteContext';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { 
+    FaBold, FaItalic, FaUnderline, FaStrikethrough, FaListUl, FaListOl, 
+    FaQuoteRight, FaUndo, FaRedo, FaSave, FaFolder, FaClock, FaChevronLeft, FaTag, FaTimes, FaStar
+} from 'react-icons/fa';
+import clsx from 'classnames';
 
 interface NoteEditorProps {
-  existingNote?: any; // Optional prop to edit an existing note
   onSaveComplete?: () => void;
 }
 
-const NoteEditor: React.FC<NoteEditorProps> = ({ existingNote, onSaveComplete }) => {
-  // Use Context instead of Redux
-  const { createNewNote, folders, createNewFolder, updateNoteById } = useNoteContext();
+const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const existingNote = state?.note; 
+
+  const { createNewNote, updateNoteById, folders } = useNoteContext();
 
   const [title, setTitle] = useState(existingNote?.title || '');
-  const [subtitle, setSubtitle] = useState(existingNote?.subtitle || '');
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [activeCommands, setActiveCommands] = useState<string[]>([]);
-  const [selectedFolder, setSelectedFolder] = useState<string>(existingNote?.folder || '');
-  const [currentDateTime, setCurrentDateTime] = useState<string>(new Date().toLocaleString());
-  const [reminder, setReminder] = useState(existingNote?.isReminder || false);
+  const [selectedFolder, setSelectedFolder] = useState(existingNote?.folder || '');
+  
+  // Reminder State
+  const [isReminder, setIsReminder] = useState(existingNote?.isReminder || false);
+  const [reminderDate, setReminderDate] = useState<Date | null>(
+      existingNote?.reminderDate ? new Date(existingNote.reminderDate) : null
+  );
 
-  // Initialize content
+  const [tags, setTags] = useState<string[]>(existingNote?.tags || []);
+  const [tagInput, setTagInput] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Star State (Share removed)
+  const [isStarred, setIsStarred] = useState(existingNote?.isStarred || false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Link.configure({ openOnClick: false }),
+      Placeholder.configure({ placeholder: 'Start typing your note here...' }),
+    ],
+    content: existingNote?.content || '',
+    editorProps: {
+        attributes: {
+            class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[500px] p-4',
+        },
+    },
+  });
+
+  // Sync state if props change
   useEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.innerHTML = existingNote?.content || '';
+    if (existingNote) {
+        setTitle(existingNote.title || '');
+        setSelectedFolder(existingNote.folder || '');
+        setReminderDate(existingNote.reminderDate ? new Date(existingNote.reminderDate) : null);
+        setTags(existingNote.tags || []);
+        setIsStarred(existingNote.isStarred || false);
+        if(editor && !editor.isDestroyed) {
+            editor.commands.setContent(existingNote.content || '');
+        }
     }
-  }, [existingNote]);
-
-  useEffect(() => {
-    formatText('justifyLeft');
-    const timer = setInterval(() => {
-      setCurrentDateTime(new Date().toLocaleString());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  }, [existingNote, editor]);
 
   const handleSave = async () => {
-    const content = contentRef.current?.innerHTML || '';
-
     if (!title.trim()) {
       alert('Please enter a title');
       return;
     }
-
-    // Ensure folder selection or creation
-    let folderIdToSave = selectedFolder;
-
-    if (!folderIdToSave) {
-      // Logic to handle empty folder if needed, or prompt creation
-      // For now, backend allows empty folder (Uncategorized)
-    }
+    setIsSaving(true);
 
     const noteData = {
       title,
-      subtitle,
-      content,
-      folder: folderIdToSave,
-      isReminder: reminder,
-      date: currentDateTime, // Backend will use createdAt, but good to send if needed
+      content: editor?.getHTML() || '',
+      folder: selectedFolder || null,
+      tags: tags,
+      isReminder: !!reminderDate, 
+      reminderDate: reminderDate ? reminderDate.toISOString() : null,
+      isStarred: isStarred, 
+      date: new Date().toISOString(),
     };
 
     try {
-      if (existingNote && existingNote.id) {
-        await updateNoteById(existingNote.id, noteData);
-        alert('Note Updated Successfully!');
+      if (existingNote && (existingNote.id || existingNote._id)) {
+        await updateNoteById(existingNote.id || existingNote._id, noteData);
       } else {
         await createNewNote(noteData);
-        alert('Note Saved Successfully!');
-      }
-
-      // Clear fields if creating new
-      if (!existingNote) {
-        setTitle('');
-        setSubtitle('');
-        if (contentRef.current) contentRef.current.innerHTML = '';
-        setSelectedFolder('');
       }
       
       if (onSaveComplete) onSaveComplete();
+      else navigate('/my-notes'); 
       
     } catch (error) {
       console.error("Save failed", error);
       alert("Failed to save note.");
+    } finally {
+        setIsSaving(false);
     }
   };
 
-  const formatText = (command: string, value?: string) => {
-    if (document.queryCommandSupported(command)) {
-      document.execCommand(command, false, value);
+  const addTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+        setTags([...tags, tagInput.trim()]);
+        setTagInput('');
     }
-    updateActiveCommands();
   };
 
-  const updateActiveCommands = () => {
-    const commands = [
-      'bold', 'italic', 'underline', 'strikeThrough', 'superscript', 'subscript',
-      'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull',
-      'insertUnorderedList', 'insertOrderedList'
-    ];
-    const active: string[] = [];
-    commands.forEach((cmd) => {
-      if (document.queryCommandState(cmd)) {
-        active.push(cmd);
-      }
-    });
-    setActiveCommands(active);
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const IconButton = ({ icon, action, command, title }: { icon: React.ReactElement, action: () => void, command: string, title: string }) => (
+  const handleTagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        addTag();
+    }
+  };
+
+  const ToolbarButton = ({ onClick, isActive, icon, title }: any) => (
     <button
-      onClick={action}
+      onClick={onClick}
+      className={clsx(
+        "p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
+        isActive ? "bg-gray-200 dark:bg-gray-700 text-purple-600" : "text-gray-600 dark:text-gray-300"
+      )}
       title={title}
-      className={`p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-600 ${activeCommands.includes(command) ? 'shadow-lg border border-gray-400' : ''}`}
     >
       {icon}
     </button>
   );
 
+  if (!editor) {
+    return null;
+  }
+
   return (
-    <div className="p-6 space-y-6 bg-gray-100 dark:bg-gray-800 min-h-screen">
-      <div className="text-sm text-gray-600 dark:text-gray-300 text-right">{currentDateTime}</div>
+    <div className="flex flex-col h-full bg-white dark:bg-gray-900 transition-colors relative">
+      {/* Top Bar */}
+      <div className="flex flex-col border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
+          <div className="flex justify-between items-center p-4">
+            <div className="flex items-center gap-4 flex-1">
+                <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                    <FaChevronLeft />
+                </button>
+                <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Untitled"
+                    className="text-2xl font-bold bg-transparent border-none focus:outline-none text-gray-800 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 w-full"
+                />
+            </div>
+            
+            <div className="flex items-center gap-3">
+                {/* Star Button */}
+                <button 
+                    onClick={() => setIsStarred(!isStarred)}
+                    className={clsx("p-2 rounded-full transition-colors", isStarred ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400")}
+                    title="Star Note"
+                >
+                    <FaStar size={20} />
+                </button>
 
-      <input
-        type="text"
-        placeholder="Enter your note title here..."
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="w-full p-3 text-xl font-semibold bg-white dark:bg-gray-700 rounded shadow focus:outline-none"
-      />
+                {/* Share Button Removed from Here */}
 
-      <input
-        type="text"
-        placeholder="Optional: Enter a subtitle"
-        value={subtitle}
-        onChange={(e) => setSubtitle(e.target.value)}
-        className="w-full p-3 text-md bg-white dark:bg-gray-700 rounded shadow focus:outline-none mt-4"
-      />
+                {/* Folder Select */}
+                <div className="relative group hidden md:block">
+                    <FaFolder className="text-gray-400 absolute top-3 left-3 pointer-events-none" />
+                    <select 
+                        value={selectedFolder} 
+                        onChange={(e) => setSelectedFolder(e.target.value)}
+                        className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-purple-500 outline-none appearance-none cursor-pointer text-gray-700 dark:text-gray-200"
+                    >
+                        <option value="">No Folder</option>
+                        {folders.map((f: any) => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    </select>
+                </div>
 
-      <div className="flex gap-2 items-center mt-4">
-        <select
-          value={selectedFolder}
-          onChange={(e) => setSelectedFolder(e.target.value)}
-          className="p-2 rounded shadow bg-white dark:bg-gray-700"
-        >
-          <option value="">Select Folder</option>
-          {folders.length > 0 ? (
-            folders.map((folder: any) => (
-              <option key={folder._id || folder.id} value={folder._id || folder.id}>
-                {folder.name}
-              </option>
-            ))
-          ) : (
-            <option value="" disabled>No folders available</option>
-          )}
-        </select>
-        
-        <button
-          onClick={async () => {
-            const newFolderName = prompt('Enter new folder name:');
-            if (newFolderName) {
-              await createNewFolder({ name: newFolderName });
-              // The folders list will update automatically via context
-            }
-          }}
-          className="p-2 bg-green-500 text-white rounded shadow hover:bg-green-600"
-        >
-          Create New Folder
-        </button>
+                {/* Reminder Date Picker */}
+                <div className="relative group">
+                    <FaClock className={clsx("absolute top-3 left-3 pointer-events-none z-10", reminderDate ? "text-purple-500" : "text-gray-400")} />
+                    <input 
+                        type="datetime-local"
+                        value={reminderDate ? new Date(reminderDate.getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
+                        onChange={(e) => setReminderDate(e.target.value ? new Date(e.target.value) : null)}
+                        className={clsx(
+                            "pl-9 pr-2 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer w-40 sm:w-auto",
+                            reminderDate ? "border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-300" : "border-gray-200 bg-gray-50 text-gray-400 dark:bg-gray-800 dark:border-gray-700"
+                        )}
+                        title="Set Reminder"
+                    />
+                </div>
+
+                <button 
+                    onClick={handleSave} 
+                    disabled={isSaving}
+                    className="flex items-center gap-2 bg-purple-600 text-white px-6 py-2 rounded-full font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 shadow-md hover:shadow-lg"
+                >
+                    <FaSave /> {isSaving ? 'Saving...' : 'Save'}
+                </button>
+            </div>
+          </div>
+
+          {/* Tags Input Area */}
+          <div className="flex flex-wrap items-center gap-2 px-4 pb-4 animate-fade-in-down">
+             <FaTag className="text-gray-400 text-sm" />
+             {tags.map(tag => (
+                 <span key={tag} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-md text-xs font-medium border border-gray-200 dark:border-gray-700 shadow-sm">
+                     {tag}
+                     <button onClick={() => removeTag(tag)} className="hover:text-red-500"><FaTimes size={10} /></button>
+                 </span>
+             ))}
+             <input 
+                 type="text" 
+                 value={tagInput}
+                 onChange={(e) => setTagInput(e.target.value)}
+                 onKeyDown={handleTagKeyDown}
+                 placeholder="Type tag + Enter..."
+                 className="bg-transparent text-sm focus:outline-none min-w-[120px] text-gray-600 dark:text-gray-300 placeholder-gray-400"
+             />
+          </div>
       </div>
 
-      {/* Formatting toolbar */}
-      <div className="flex flex-wrap gap-2 bg-white dark:bg-gray-700 p-3 rounded shadow items-center mt-4">
-        <div className="flex gap-2 flex-wrap">
-          <IconButton icon={<FaBold />} action={() => formatText('bold')} command="bold" title="Bold" />
-          <IconButton icon={<FaItalic />} action={() => formatText('italic')} command="italic" title="Italic" />
-          <IconButton icon={<FaUnderline />} action={() => formatText('underline')} command="underline" title="Underline" />
-          <IconButton icon={<FaStrikethrough />} action={() => formatText('strikeThrough')} command="strikeThrough" title="Strikethrough" />
-          <IconButton icon={<FaSuperscript />} action={() => formatText('superscript')} command="superscript" title="Superscript" />
-          <IconButton icon={<FaSubscript />} action={() => formatText('subscript')} command="subscript" title="Subscript" />
-          <IconButton icon={<FaAlignLeft />} action={() => formatText('justifyLeft')} command="justifyLeft" title="Left Align" />
-          <IconButton icon={<FaAlignCenter />} action={() => formatText('justifyCenter')} command="justifyCenter" title="Center Align" />
-          <IconButton icon={<FaAlignRight />} action={() => formatText('justifyRight')} command="justifyRight" title="Right Align" />
-          <IconButton icon={<FaAlignJustify />} action={() => formatText('justifyFull')} command="justifyFull" title="Justify" />
-          <IconButton icon={<FaListUl />} action={() => formatText('insertUnorderedList')} command="insertUnorderedList" title="Unordered List" />
-          <IconButton icon={<FaListOl />} action={() => formatText('insertOrderedList')} command="insertOrderedList" title="Ordered List" />
+      {/* Formatting Toolbar */}
+      <div className="flex items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/90 backdrop-blur sticky top-[130px] z-10 overflow-x-auto">
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} icon={<FaBold />} title="Bold" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} icon={<FaItalic />} title="Italic" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} icon={<FaUnderline />} title="Underline" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} icon={<FaStrikethrough />} title="Strike" />
+        <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-2" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} icon={<FaListUl />} title="Bullet List" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} icon={<FaListOl />} title="Ordered List" />
+        <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} icon={<FaQuoteRight />} title="Blockquote" />
+        <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-2" />
+        <ToolbarButton onClick={() => editor.chain().focus().undo().run()} icon={<FaUndo />} title="Undo" />
+        <ToolbarButton onClick={() => editor.chain().focus().redo().run()} icon={<FaRedo />} title="Redo" />
+      </div>
+
+      {/* Editor Content */}
+      <div className="flex-1 overflow-y-auto cursor-text" onClick={() => editor.chain().focus().run()}>
+        <div className="max-w-4xl mx-auto py-8 px-6 md:px-10">
+            <EditorContent editor={editor} />
         </div>
-      </div>
-
-      {/* Content */}
-      <div
-        ref={contentRef}
-        contentEditable
-        className="mt-4 p-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded shadow min-h-80vh"
-        onInput={updateActiveCommands}
-      />
-
-      <div className="mt-4 flex items-center">
-        <label className="flex items-center text-gray-700 dark:text-gray-300">
-          <input
-            type="checkbox"
-            checked={reminder}
-            onChange={() => setReminder(!reminder)}
-            className="mr-2 h-4 w-4"
-          />
-          Set as reminder
-        </label>
-        <button
-          onClick={handleSave}
-          className="ml-4 p-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 flex items-center"
-        >
-          <FaSave className="mr-2" />
-          Save Note
-        </button>
       </div>
     </div>
   );

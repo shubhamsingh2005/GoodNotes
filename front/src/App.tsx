@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 
@@ -27,6 +27,7 @@ import SharedWithMe from './pages/SidebarComponents/SharedWithMe';
 import Search from './pages/SidebarComponents/Search';
 import Help from './pages/SidebarComponents/Help';
 import Trash from './pages/SidebarComponents/Trash';
+import Settings from './pages/SidebarComponents/Settings'; // Added Settings Route
 
 // Context & State
 import store from '@/redux/store';
@@ -45,19 +46,18 @@ const App: React.FC = () => {
       <AuthProvider>
         <DarkModeProvider>
           <SidebarProvider>
-            <NoteProvider>
-              <Router>
-                <div className="w-full h-full m-0 p-0 font-sans text-gray-900 dark:text-gray-100">
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<LandingPage />} />
-                    <Route path="/signin" element={<SignIn />} />
-                    <Route path="/signup" element={<SignUp />} />
+            <Router>
+              <div className="w-full h-full m-0 p-0 font-sans text-gray-900 dark:text-gray-100">
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/signin" element={<SignIn />} />
+                  <Route path="/signup" element={<SignUp />} />
 
-                    {/* Protected Routes wrapped in Layout */}
-                    <Route element={<ProtectedRoute />}>
-                      <Route element={<Layout />}>
-                        {/* The Layout component contains the Sidebar and Header */}
+                  {/* Protected Routes */}
+                  <Route element={<ProtectedRoute />}>
+                     {/* NoteProvider only active when authenticated */}
+                     <Route element={<NoteProvider><Layout /></NoteProvider>}>
                         <Route path="/home" element={<Home />} />
                         <Route path="/note-editor" element={<NoteEditor />} />
                         
@@ -69,18 +69,18 @@ const App: React.FC = () => {
                         <Route path="/tags" element={<Tags />} />
                         <Route path="/shared-with-me" element={<SharedWithMe />} />
                         <Route path="/search" element={<Search />} />
+                        <Route path="/settings" element={<Settings />} /> {/* Settings Route */}
                         <Route path="/help" element={<Help />} />
                         <Route path="/trash" element={<Trash />} />
-                      </Route>
-                    </Route>
+                     </Route>
+                  </Route>
 
-                    {/* Redirects */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                  <ToastContainer theme="colored" position="bottom-right" />
-                </div>
-              </Router>
-            </NoteProvider>
+                  {/* Redirects */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+                <ToastContainer theme="colored" position="bottom-right" />
+              </div>
+            </Router>
           </SidebarProvider>
         </DarkModeProvider>
       </AuthProvider>

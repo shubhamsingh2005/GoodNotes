@@ -110,15 +110,26 @@ export const searchNotes = async (query: string) => {
   }
 };
 
-// Get shared notes
-export const getSharedNotes = async () => {
-  try {
-    const response = await api.get('/notes/shared');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching shared notes:', error);
-    throw error;
-  }
+// Generate Share Code
+export const shareNote = async (id: string) => {
+    try {
+        const response = await api.post(`/notes/${id}/share`);
+        return response.data; // { shareCode: "1234" }
+    } catch (error) {
+        console.error('Error sharing note:', error);
+        throw error;
+    }
+};
+
+// Fetch Shared Note by Code
+export const fetchSharedNoteByCode = async (code: string) => {
+    try {
+        const response = await api.get(`/notes/shared/${code}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching shared note:', error);
+        throw error;
+    }
 };
 
 // Export all as `noteService`
@@ -133,5 +144,6 @@ export const noteService = {
   pinNote,
   starNote,
   searchNotes,
-  getSharedNotes,
+  shareNote,
+  fetchSharedNoteByCode,
 };

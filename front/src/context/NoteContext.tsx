@@ -9,7 +9,9 @@ import {
   updateNote, 
   pinNote, 
   starNote, 
-  searchNotes 
+  searchNotes,
+  shareNote,
+  fetchSharedNoteByCode
 } from '../services/noteService';
 import { getAllFolders, createFolder, deleteFolder, getFolderNotes } from '../services/folderService';
 
@@ -24,6 +26,7 @@ interface Note {
   isPinned: boolean;
   isStarred: boolean;
   isTrashed: boolean;
+  shareCode?: string;
   folder?: string;
 }
 
@@ -42,7 +45,7 @@ interface NoteContextType {
   fetchNotes: () => void;
   fetchTrashedNotes: () => void;
   createNewNote: (noteData: any) => void;
-  deleteNoteById: (id: string) => void; // Soft delete
+  deleteNoteById: (id: string) => void; 
   restoreNoteById: (id: string) => void;
   permanentlyDeleteNoteById: (id: string) => void;
   updateNoteById: (id: string, noteData: any) => void;
@@ -53,6 +56,8 @@ interface NoteContextType {
   createNewFolder: (folderData: any) => void;
   deleteFolderById: (id: string) => void;
   getNotesByFolderId: (folderId: string) => Promise<any>;
+  generateShareCode: (id: string) => Promise<any>;
+  getSharedNote: (code: string) => Promise<any>;
 }
 
 const NoteContext = createContext<NoteContextType | undefined>(undefined);
@@ -65,8 +70,6 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     fetchNotes();
     fetchFolders();
-    // We can fetch trashed notes on mount too, or only when visiting Trash page.
-    // Fetching now ensures counts are correct if we show them.
     fetchTrashedNotes(); 
   }, []);
 
@@ -90,7 +93,6 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setNotes([newNote, ...notes]);
   };
 
-  // Soft delete: Move from 'notes' to 'trashedNotes'
   const deleteNoteById = async (id: string) => {
     await deleteNote(id);
     const noteToTrash = notes.find(n => (n.id === id || n._id === id));
@@ -100,7 +102,6 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Restore: Move from 'trashedNotes' to 'notes'
   const restoreNoteById = async (id: string) => {
     await restoreNote(id);
     const noteToRestore = trashedNotes.find(n => (n.id === id || n._id === id));
@@ -110,7 +111,6 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Permanent Delete: Remove from 'trashedNotes'
   const permanentlyDeleteNoteById = async (id: string) => {
     await deleteNotePermanently(id);
     setTrashedNotes(trashedNotes.filter((note) => (note.id !== id && note._id !== id)));
@@ -150,6 +150,15 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return await getFolderNotes(folderId);
   };
 
+  // Share
+  const generateShareCode = async (id: string) => {
+      return await shareNote(id);
+  };
+
+  const getSharedNote = async (code: string) => {
+      return await fetchSharedNoteByCode(code);
+  };
+
   return (
     <NoteContext.Provider
       value={{
@@ -170,6 +179,8 @@ export const NoteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createNewFolder,
         deleteFolderById,
         getNotesByFolderId,
+        generateShareCode,
+        getSharedNote,
       }}
     >
       {children}

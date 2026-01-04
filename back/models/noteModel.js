@@ -18,6 +18,9 @@ const noteSchema = new mongoose.Schema({
     ref: 'Folder', 
     required: false, 
   },
+  tags: [{ 
+    type: String
+  }],
   isPinned: {
     type: Boolean,
     default: false,
@@ -26,7 +29,7 @@ const noteSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  isTrashed: { // Added Soft Delete flag
+  isTrashed: {
     type: Boolean,
     default: false,
   },
@@ -37,6 +40,10 @@ const noteSchema = new mongoose.Schema({
   reminderDate: {
     type: Date,
     required: false,
+    default: null,
+  },
+  shareCode: { // Added for Sharing
+    type: String, 
     default: null,
   },
   colorPriority: {

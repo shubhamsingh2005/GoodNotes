@@ -13,10 +13,13 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Allow env var for production
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', 
   credentials: true,
 }));
-app.use(express.json());
+
+// Increase payload size limit for Profile Pictures (Base64)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routes
 app.use('/api', require('./routes/authRoutes'));

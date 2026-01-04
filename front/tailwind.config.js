@@ -27,6 +27,6 @@ module.exports = {
   plugins: [
     require('tailwindcss-gradients'),
     require('flowbite/plugin'),
-    require('@tailwindcss/typography'), // Good for the rich text editor content
+    // require('@tailwindcss/typography'), // Removed because package is missing
   ],
 }
