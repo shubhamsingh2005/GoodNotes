@@ -19,7 +19,8 @@ interface FolderContextType {
 
 const FolderContext = createContext<FolderContextType | undefined>(undefined);
 
-export const FolderProvider: React.FC = ({ children }) => {
+// Fix: Add explicit children prop type
+export const FolderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [folders, setFolders] = useState<Folder[]>([]);
 
   useEffect(() => {

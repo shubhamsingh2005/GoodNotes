@@ -15,7 +15,7 @@ import {
 } from '../services/noteService';
 import { getAllFolders, createFolder, deleteFolder, getFolderNotes } from '../services/folderService';
 
-interface Note {
+export interface Note {
   id: string;
   _id?: string;
   title: string;
@@ -28,6 +28,12 @@ interface Note {
   isTrashed: boolean;
   shareCode?: string;
   folder?: string;
+  color?: string;
+  isReminder?: boolean;
+  reminderDate?: string;
+  tags?: string[];
+  user?: string;
+  createdAt?: string;
 }
 
 interface Folder {
