@@ -6,9 +6,6 @@ const connectDB = require('./config/db');
 
 dotenv.config();
 
-// Connect to Database
-connectDB();
-
 const app = express();
 
 // Middlewares
@@ -20,6 +17,19 @@ app.use(cors({
 // Increase payload size limit for Profile Pictures (Base64)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Database Connection Middleware
+// Crucial for Serverless (Vercel): Ensures DB is connected before processing request
+app.use(async (req, res, next) => {
+    if (req.method === 'OPTIONS') return next(); // Skip for preflight
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.error("Database Connection Error:", error);
+        res.status(500).json({ message: "Database Connection Failed" });
+    }
+});
 
 // Routes
 // Note: Vercel routes requests to /api/* to this serverless function.
@@ -47,7 +57,10 @@ const PORT = process.env.PORT || 5000;
 
 // Only start server if run directly (Local Dev)
 if (require.main === module) {
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    // In local dev, we connect once at startup
+    connectDB().then(() => {
+        app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    });
 }
 
 // Export for Vercel
