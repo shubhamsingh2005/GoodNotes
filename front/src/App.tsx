@@ -14,6 +14,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import SignIn from './pages/Signin';
 import SignUp from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Home from './pages/Home';
 import NoteEditor from './components/NoteEditor';
 
@@ -27,7 +29,8 @@ import SharedWithMe from './pages/SidebarComponents/SharedWithMe';
 import Search from './pages/SidebarComponents/Search';
 import Help from './pages/SidebarComponents/Help';
 import Trash from './pages/SidebarComponents/Trash';
-import Settings from './pages/SidebarComponents/Settings'; // Added Settings Route
+import Settings from './pages/SidebarComponents/Settings';
+import About from './pages/SidebarComponents/About'; // Added About Page
 
 // Context & State
 import store from '@/redux/store';
@@ -53,6 +56,8 @@ const App: React.FC = () => {
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/signin" element={<SignIn />} />
                   <Route path="/signup" element={<SignUp />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
 
                   {/* Protected Routes */}
                   <Route element={<ProtectedRoute />}>
@@ -69,9 +74,10 @@ const App: React.FC = () => {
                         <Route path="/tags" element={<Tags />} />
                         <Route path="/shared-with-me" element={<SharedWithMe />} />
                         <Route path="/search" element={<Search />} />
-                        <Route path="/settings" element={<Settings />} /> {/* Settings Route */}
+                        <Route path="/settings" element={<Settings />} />
                         <Route path="/help" element={<Help />} />
                         <Route path="/trash" element={<Trash />} />
+                        <Route path="/about" element={<About />} /> {/* About Route */}
                      </Route>
                   </Route>
 

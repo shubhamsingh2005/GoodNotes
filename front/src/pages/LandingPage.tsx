@@ -38,7 +38,7 @@ const LandingPage: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => handleNavigation('/Signin')}
+            onClick={() => handleNavigation('/signin')}
             className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full shadow-md transition font-semibold"
           >
             Signin

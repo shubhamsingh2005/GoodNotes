@@ -2,7 +2,7 @@ const Note = require('../models/noteModel');
 
 // Create a new note
 const createNote = async (req, res) => {
-  const { title, subtitle, content, folder, tags, isPinned, isStarred, isReminder, reminderDate, colorPriority } = req.body;
+  const { title, subtitle, content, folder, tags, isPinned, isStarred, isReminder, reminderDate, colorPriority, color } = req.body;
 
   try {
     const note = await Note.create({
@@ -16,6 +16,7 @@ const createNote = async (req, res) => {
       isReminder,
       reminderDate, 
       colorPriority,
+      color, // Added color
       user: req.user.id, 
     });
     res.status(201).json(note);

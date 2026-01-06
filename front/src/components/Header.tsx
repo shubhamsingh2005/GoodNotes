@@ -1,16 +1,18 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'; 
 import { useNavigate } from 'react-router-dom';
-import { FaSignOutAlt, FaMoon, FaSun, FaBell, FaSearch, FaRegFileAlt, FaTimes } from 'react-icons/fa';
+import { FaSignOutAlt, FaMoon, FaSun, FaBell, FaSearch, FaRegFileAlt, FaTimes, FaBars } from 'react-icons/fa'; // Added FaBars
 import AvatarMenu from './AvatarMenu';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useAuth } from '../context/AuthContext';
 import { useNoteContext } from '../context/NoteContext';
+import { useSidebar } from '../context/SidebarContext'; // Import Sidebar Context
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useDarkMode();
   const { logout, user } = useAuth();
   const { notes } = useNoteContext();
+  const { toggleSidebar } = useSidebar(); // Use Context
   
   // Local Search State
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,26 +64,38 @@ const Header: React.FC = () => {
   }, [notes]);
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300 z-30 sticky top-0">
+    <header className="flex items-center justify-between px-4 md:px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300 z-30 sticky top-0">
       
-      {/* Title / Welcome */}
-      <div className="flex flex-col cursor-pointer" onClick={() => navigate('/home')}>
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white tracking-tight">
-          Welcome, <span className="text-purple-600 dark:text-purple-400">{user?.name || 'User'}</span>
-        </h2>
-        <span className="text-xs text-gray-500 dark:text-gray-400">GoodNotes Manager</span>
+      {/* Left: Mobile Toggle & Welcome */}
+      <div className="flex items-center gap-4">
+          <button 
+             onClick={toggleSidebar} 
+             className="md:hidden text-gray-600 dark:text-gray-300 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+             <FaBars size={20} />
+          </button>
+
+          <div className="flex flex-col cursor-pointer" onClick={() => navigate('/home')}>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white tracking-tight hidden sm:block">
+              Welcome, <span className="text-purple-600 dark:text-purple-400">{user?.name || 'User'}</span>
+            </h2>
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white tracking-tight sm:hidden">
+              <span className="text-purple-600">G</span><span className="text-sky-500">N</span>
+            </h2>
+            <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">GoodNotes Manager</span>
+          </div>
       </div>
 
       {/* Center: Spotlight Search Bar */}
-      <div className="flex-1 max-w-xl px-4 relative z-50" ref={searchRef}>
+      <div className="flex-1 max-w-xl px-2 md:px-4 relative z-50" ref={searchRef}>
         <div className="relative">
             <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setIsSearchOpen(true); }}
                 onFocus={() => setIsSearchOpen(true)}
-                placeholder="Search notes..."
-                className="w-full py-2.5 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500 focus:outline-none border border-transparent dark:border-gray-600 transition-all"
+                placeholder="Search..."
+                className="w-full py-2.5 pl-10 pr-4 rounded-full bg-gray-100 dark:bg-gray-700/50 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500 focus:outline-none border border-transparent dark:border-gray-600 transition-all text-sm md:text-base"
             />
             <FaSearch className="absolute left-3.5 top-3 text-gray-400" />
             {searchTerm && (
@@ -128,7 +142,7 @@ const Header: React.FC = () => {
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-4 relative">
+      <div className="flex items-center gap-2 md:gap-4 relative">
         <button
           onClick={toggleDarkMode}
           className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -151,7 +165,7 @@ const Header: React.FC = () => {
 
             {/* Notification Dropdown */}
             {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 animate-fade-in-up origin-top-right">
+                <div className="absolute right-0 top-full mt-2 w-72 md:w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50 animate-fade-in-up origin-top-right">
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
                         <h3 className="font-bold text-gray-800 dark:text-white text-sm">Reminders</h3>
                         <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full">{activeReminders.length} Active</span>
@@ -192,7 +206,7 @@ const Header: React.FC = () => {
         
         <button
           onClick={handleLogout}
-          className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-lg transition-colors"
+          className="hidden lg:flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 rounded-lg transition-colors"
         >
           <FaSignOutAlt />
           Logout

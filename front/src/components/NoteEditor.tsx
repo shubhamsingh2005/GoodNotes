@@ -8,9 +8,10 @@ import { useNoteContext } from '../context/NoteContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
     FaBold, FaItalic, FaUnderline, FaStrikethrough, FaListUl, FaListOl, 
-    FaQuoteRight, FaUndo, FaRedo, FaSave, FaFolder, FaClock, FaChevronLeft, FaTag, FaTimes, FaStar
+    FaQuoteRight, FaUndo, FaRedo, FaSave, FaFolder, FaClock, FaChevronLeft, FaTag, FaTimes, FaStar, FaPalette
 } from 'react-icons/fa';
 import clsx from 'classnames';
+import { noteColors, getNoteColorClass } from '../utils/colorUtils';
 
 interface NoteEditorProps {
   onSaveComplete?: () => void;
@@ -36,8 +37,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
   const [tagInput, setTagInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
-  // Star State (Share removed)
+  // Star & Color
   const [isStarred, setIsStarred] = useState(existingNote?.isStarred || false);
+  const [color, setColor] = useState(existingNote?.color || 'default');
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -62,6 +65,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
         setReminderDate(existingNote.reminderDate ? new Date(existingNote.reminderDate) : null);
         setTags(existingNote.tags || []);
         setIsStarred(existingNote.isStarred || false);
+        setColor(existingNote.color || 'default');
         if(editor && !editor.isDestroyed) {
             editor.commands.setContent(existingNote.content || '');
         }
@@ -83,6 +87,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
       isReminder: !!reminderDate, 
       reminderDate: reminderDate ? reminderDate.toISOString() : null,
       isStarred: isStarred, 
+      color: color,
       date: new Date().toISOString(),
     };
 
@@ -139,10 +144,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
     return null;
   }
 
+  const bgClass = getNoteColorClass(color);
+
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 transition-colors relative">
+    <div className={clsx("flex flex-col h-full transition-colors relative", bgClass)}>
       {/* Top Bar */}
-      <div className="flex flex-col border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-20">
+      <div className={clsx("flex flex-col border-b border-gray-200 dark:border-gray-700 sticky top-0 z-20 transition-colors", bgClass)}>
           <div className="flex justify-between items-center p-4">
             <div className="flex items-center gap-4 flex-1">
                 <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
@@ -153,11 +160,38 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Untitled"
-                    className="text-2xl font-bold bg-transparent border-none focus:outline-none text-gray-800 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 w-full"
+                    className="text-2xl font-bold bg-transparent border-none focus:outline-none text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 w-full"
                 />
             </div>
             
             <div className="flex items-center gap-3">
+                {/* Color Picker */}
+                <div className="relative">
+                    <button 
+                        onClick={() => setShowColorPicker(!showColorPicker)}
+                        className="p-2 rounded-full text-gray-500 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                        title="Change Color"
+                    >
+                        <FaPalette size={18} />
+                    </button>
+                    {showColorPicker && (
+                        <div className="absolute top-full right-0 mt-2 p-3 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 grid grid-cols-5 gap-2 z-30 w-48 animate-scale-in">
+                            {noteColors.map((c) => (
+                                <button
+                                    key={c.value}
+                                    onClick={() => { setColor(c.value); setShowColorPicker(false); }}
+                                    className={clsx(
+                                        "w-8 h-8 rounded-full border border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform",
+                                        c.bg, c.darkBg,
+                                        color === c.value ? "ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-gray-800" : ""
+                                    )}
+                                    title={c.name}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 {/* Star Button */}
                 <button 
                     onClick={() => setIsStarred(!isStarred)}
@@ -167,15 +201,13 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
                     <FaStar size={20} />
                 </button>
 
-                {/* Share Button Removed from Here */}
-
                 {/* Folder Select */}
                 <div className="relative group hidden md:block">
                     <FaFolder className="text-gray-400 absolute top-3 left-3 pointer-events-none" />
                     <select 
                         value={selectedFolder} 
                         onChange={(e) => setSelectedFolder(e.target.value)}
-                        className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-purple-500 outline-none appearance-none cursor-pointer text-gray-700 dark:text-gray-200"
+                        className="pl-9 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-black/20 text-sm focus:ring-2 focus:ring-purple-500 outline-none appearance-none cursor-pointer text-gray-700 dark:text-gray-200"
                     >
                         <option value="">No Folder</option>
                         {folders.map((f: any) => <option key={f.id} value={f.id}>{f.name}</option>)}
@@ -191,7 +223,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
                         onChange={(e) => setReminderDate(e.target.value ? new Date(e.target.value) : null)}
                         className={clsx(
                             "pl-9 pr-2 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer w-40 sm:w-auto",
-                            reminderDate ? "border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-300" : "border-gray-200 bg-gray-50 text-gray-400 dark:bg-gray-800 dark:border-gray-700"
+                            reminderDate ? "border-purple-200 bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-300" : "border-gray-200 bg-white/50 dark:bg-black/20 text-gray-400 dark:border-gray-700"
                         )}
                         title="Set Reminder"
                     />
@@ -211,7 +243,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
           <div className="flex flex-wrap items-center gap-2 px-4 pb-4 animate-fade-in-down">
              <FaTag className="text-gray-400 text-sm" />
              {tags.map(tag => (
-                 <span key={tag} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-md text-xs font-medium border border-gray-200 dark:border-gray-700 shadow-sm">
+                 <span key={tag} className="flex items-center gap-1 bg-white/60 dark:bg-black/30 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-md text-xs font-medium border border-gray-200 dark:border-gray-700 shadow-sm">
                      {tag}
                      <button onClick={() => removeTag(tag)} className="hover:text-red-500"><FaTimes size={10} /></button>
                  </span>
@@ -227,8 +259,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ onSaveComplete }) => {
           </div>
       </div>
 
-      {/* Formatting Toolbar */}
-      <div className="flex items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/90 backdrop-blur sticky top-[130px] z-10 overflow-x-auto">
+      {/* Formatting Toolbar - Sticky */}
+      <div className={clsx("flex items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-700 sticky top-[130px] z-10 overflow-x-auto transition-colors backdrop-blur-md bg-white/30 dark:bg-black/30")}>
         <ToolbarButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} icon={<FaBold />} title="Bold" />
         <ToolbarButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} icon={<FaItalic />} title="Italic" />
         <ToolbarButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} icon={<FaUnderline />} title="Underline" />

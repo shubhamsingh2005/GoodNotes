@@ -42,9 +42,13 @@ const noteSchema = new mongoose.Schema({
     required: false,
     default: null,
   },
-  shareCode: { // Added for Sharing
+  shareCode: { 
     type: String, 
     default: null,
+  },
+  color: { // New Color Field
+    type: String,
+    default: 'default', // 'default', 'red', 'blue', etc.
   },
   colorPriority: {
     type: String,

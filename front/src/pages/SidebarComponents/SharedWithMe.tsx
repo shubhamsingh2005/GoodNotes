@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { useNoteContext } from '../../context/NoteContext';
-import { FaShareAlt, FaSearch, FaRegFileAlt, FaQuoteRight } from 'react-icons/fa';
+import { FaShareAlt, FaSearch, FaRegFileAlt, FaSave, FaCheckCircle } from 'react-icons/fa';
+import clsx from 'classnames';
+import { getNoteColorClass } from '../../utils/colorUtils';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 const SharedWithMe: React.FC = () => {
-  const { getSharedNote } = useNoteContext();
+  const { getSharedNote, createNewNote } = useNoteContext();
   const [code, setCode] = useState('');
   const [note, setNote] = useState<any>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
 
   const handleFetch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +32,30 @@ const SharedWithMe: React.FC = () => {
     } finally {
         setLoading(false);
     }
+  };
+
+  const handleSaveCopy = async () => {
+      if (!note) return;
+      setSaving(true);
+      try {
+          // Create a new note based on the shared note
+          await createNewNote({
+              title: `${note.title} (Shared Copy)`,
+              subtitle: note.subtitle,
+              content: note.content,
+              tags: note.tags || [],
+              color: note.color || 'default',
+              // We don't copy isPinned, isStarred, etc.
+          });
+          toast.success("Note copied to your collection successfully!");
+          // Optional: Navigate to home or my-notes
+          setTimeout(() => navigate('/my-notes'), 1500);
+      } catch (error) {
+          toast.error("Failed to save copy.");
+          console.error(error);
+      } finally {
+          setSaving(false);
+      }
   };
 
   return (
@@ -84,19 +114,35 @@ const SharedWithMe: React.FC = () => {
 
       {/* Note Display Section */}
       {note && (
-          <div className="mt-12 w-full max-w-3xl animate-fade-in-up">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="mt-12 w-full max-w-3xl animate-fade-in-up pb-10">
+              {/* Toolbar */}
+              <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-lg font-bold text-gray-700 dark:text-gray-300">Preview</h3>
+                 <button 
+                    onClick={handleSaveCopy}
+                    disabled={saving}
+                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-md disabled:opacity-70"
+                 >
+                    {saving ? 'Saving...' : <><FaSave /> Save Copy to My Notes</>}
+                 </button>
+              </div>
+
+              <div className={clsx(
+                  "rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors relative",
+                  getNoteColorClass(note.color || 'default') // Apply Note Color
+              )}>
                   {/* Decorative Header */}
                   <div className="bg-gradient-to-r from-purple-600 to-blue-500 p-1"></div>
                   
                   <div className="p-8 md:p-10">
                       <div className="flex items-center gap-2 mb-6 text-purple-600 dark:text-purple-400 font-bold uppercase text-xs tracking-widest border-b border-gray-100 dark:border-gray-700 pb-4">
-                          <FaRegFileAlt /> Preview Mode
+                          <FaRegFileAlt /> Read-Only Mode
                       </div>
                       
-                      <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">
+                      <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2 leading-tight">
                           {note.title}
                       </h1>
+                      {note.subtitle && <p className="text-xl text-gray-500 dark:text-gray-400 mb-6 font-medium">{note.subtitle}</p>}
                       
                       {/* Note Content */}
                       <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">

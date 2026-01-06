@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNoteContext } from '../../context/NoteContext'; 
-import { FaThLarge, FaList, FaMapPin, FaTrash, FaEdit, FaShareAlt } from 'react-icons/fa';
+import { FaThLarge, FaList, FaMapPin, FaTrash, FaEdit, FaShareAlt, FaPalette } from 'react-icons/fa';
 import ShareModal from '../../components/ShareModal';
 import clsx from 'classnames';
+import { getNoteColorClass, noteColors } from '../../utils/colorUtils';
 
 const MyNotes: React.FC = () => {
-  const { notes, pinNoteById, deleteNoteById, generateShareCode } = useNoteContext(); 
+  const { notes, pinNoteById, deleteNoteById, generateShareCode, updateNoteById } = useNoteContext(); 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
   // Share State
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [currentShareCode, setCurrentShareCode] = useState<string | null>(null);
+  
+  // Color Picker State
+  const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
 
   const pinnedNotes = notes.filter((note: any) => note.isPinned);
   const unPinnedNotes = notes.filter((note: any) => !note.isPinned);
@@ -33,8 +37,19 @@ const MyNotes: React.FC = () => {
       }
   };
 
+  const handleColorChange = async (e: React.MouseEvent, noteId: string, colorValue: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+          await updateNoteById(noteId, { color: colorValue });
+          setActiveColorPicker(null);
+      } catch (err) {
+          console.error("Failed to update color", err);
+      }
+  };
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" onClick={() => setActiveColorPicker(null)}>
       <ShareModal 
         isOpen={shareModalOpen} 
         onClose={() => setShareModalOpen(false)} 
@@ -70,7 +85,8 @@ const MyNotes: React.FC = () => {
               <div 
                 key={note.id || note._id} 
                 className={clsx(
-                    "group bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all relative flex",
+                    "group p-5 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all relative flex",
+                    getNoteColorClass(note.color || 'default'), 
                     viewMode === 'grid' ? "flex-col h-48" : "flex-row items-center h-20 gap-4"
                 )}
               >
@@ -83,7 +99,7 @@ const MyNotes: React.FC = () => {
                 {/* Note Content Preview */}
                 <div 
                   className={clsx(
-                      "text-gray-600 dark:text-gray-400 text-sm",
+                      "text-gray-600 dark:text-gray-300 text-sm",
                       viewMode === 'grid' ? "mb-4 line-clamp-3 flex-1" : "line-clamp-1 flex-1 mb-0"
                   )}
                   dangerouslySetInnerHTML={{ __html: note.content || '' }} 
@@ -94,9 +110,37 @@ const MyNotes: React.FC = () => {
                     "flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10",
                     viewMode === 'grid' ? "justify-end mt-auto" : "justify-end"
                 )}>
+                   {/* Color Picker Button */}
+                   <div className="relative">
+                       <button
+                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveColorPicker(activeColorPicker === (note.id || note._id) ? null : (note.id || note._id)); }}
+                         className="text-gray-500/70 hover:text-purple-600 text-sm"
+                         title="Change Color"
+                       >
+                         <FaPalette />
+                       </button>
+                       {/* Color Popup */}
+                       {activeColorPicker === (note.id || note._id) && (
+                           <div className="absolute bottom-full right-0 mb-2 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 grid grid-cols-5 gap-1 w-32 z-50 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+                               {noteColors.map((c) => (
+                                   <button
+                                       key={c.value}
+                                       onClick={(e) => handleColorChange(e, note.id || note._id, c.value)}
+                                       className={clsx(
+                                           "w-5 h-5 rounded-full border border-gray-200 dark:border-gray-600 hover:scale-110 transition-transform",
+                                           c.bg, c.darkBg,
+                                           (note.color === c.value) && "ring-1 ring-purple-500"
+                                       )}
+                                       title={c.name}
+                                   />
+                               ))}
+                           </div>
+                       )}
+                   </div>
+
                    <button 
                      onClick={(e) => { e.preventDefault(); pinNoteById(note.id || note._id, !note.isPinned); }}
-                     className={`text-sm hover:text-purple-600 ${note.isPinned ? 'text-purple-500' : 'text-gray-400'}`}
+                     className={`text-sm hover:text-purple-600 ${note.isPinned ? 'text-purple-500' : 'text-gray-500/70'}`}
                      title={note.isPinned ? "Unpin" : "Pin"}
                    >
                      <FaMapPin />
@@ -104,19 +148,19 @@ const MyNotes: React.FC = () => {
                    
                    <button 
                      onClick={(e) => handleShare(e, note)}
-                     className="text-gray-400 hover:text-green-500 text-sm"
+                     className="text-gray-500/70 hover:text-green-600 text-sm"
                      title="Share"
                    >
                      <FaShareAlt />
                    </button>
 
-                   <Link to="/note-editor" state={{ note }} className="text-gray-400 hover:text-blue-500 text-sm" title="Edit">
+                   <Link to="/note-editor" state={{ note }} className="text-gray-500/70 hover:text-blue-600 text-sm" title="Edit">
                      <FaEdit />
                    </Link>
                    
                    <button 
                      onClick={(e) => { e.preventDefault(); deleteNoteById(note.id || note._id); }}
-                     className="text-gray-400 hover:text-red-500 text-sm"
+                     className="text-gray-500/70 hover:text-red-600 text-sm"
                      title="Delete"
                    >
                      <FaTrash />

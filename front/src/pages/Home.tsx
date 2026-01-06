@@ -4,6 +4,8 @@ import Dashboard from '@/pages/SidebarComponents/Dashboard';
 import { useNoteContext } from '../context/NoteContext'; 
 import { Note } from '../types/Note'; 
 import { useOutletContext } from 'react-router-dom';
+import clsx from 'classnames';
+import { getNoteColorClass } from '../utils/colorUtils';
 
 const Home: React.FC = () => {
   // Use Context for Data
@@ -55,12 +57,15 @@ const Home: React.FC = () => {
           </div>
         </div>
         
-        {/* Quick View / Preview Area (Optional, placeholder for now) */}
-        <div className="hidden md:flex flex-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 items-center justify-center text-gray-400 p-8 text-center">
+        {/* Quick View / Preview Area */}
+        <div className={clsx(
+            "hidden md:flex flex-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 items-center justify-center text-gray-400 p-8 text-center transition-colors",
+            activeNote ? getNoteColorClass(activeNote.color || 'default') : "bg-white dark:bg-gray-800"
+        )}>
             {activeNote ? (
               <div className="w-full h-full p-6 text-left overflow-y-auto">
                 <h2 className="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-100">{activeNote.title}</h2>
-                <div className="prose dark:prose-invert" dangerouslySetInnerHTML={{ __html: activeNote.content }} />
+                <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeNote.content }} />
               </div>
             ) : (
               <div>

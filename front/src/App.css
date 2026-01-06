@@ -1,16 +1,11 @@
+/* App.css - Cleaned up to avoid conflicts */
 #root {
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  text-align: left;
-  background-color: #f7f8fa; /* Light background for entire app */
+  width: 100%;
+  height: 100%;
 }
 
-body {
-  font-family: 'Roboto', sans-serif;
-  background: linear-gradient(to right, #00c6ff, #0072ff); /* Gradient background */
-  color: #333;
-}
+/* Global Reset handled by index.css and Tailwind */
+/* Removing hardcoded body gradients here to allow pages to control their own backgrounds */
 
 .logo {
   height: 6em;
@@ -26,14 +21,3 @@ body {
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
-
-.card {
-  padding: 2em;
-  border-radius: 10px;
-  background-color: #ffffff;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
