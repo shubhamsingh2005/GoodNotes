@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// Ensure that this is pointing to your backend URL
+// Use relative path - this works for both:
+// 1. Local Development (via Vite Proxy in vite.config.ts)
+// 2. Production (Vercel rewrites in vercel.json)
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api', 
+  baseURL: '/api', 
   headers: {
     'Content-Type': 'application/json',
   },

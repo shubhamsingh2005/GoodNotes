@@ -22,9 +22,16 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routes
+// Note: Vercel routes requests to /api/* to this serverless function.
+// We mount routes at /api so they match.
 app.use('/api', require('./routes/authRoutes'));
 app.use('/api/notes', require('./routes/noteRoutes'));
 app.use('/api/folders', require('./routes/folderRoutes'));
+
+// Test Route
+app.get('/', (req, res) => {
+    res.send('API is running...');
+});
 
 // Global Error Handler
 app.use((err, req, res, next) => {
@@ -37,4 +44,11 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Only start server if run directly (Local Dev)
+if (require.main === module) {
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// Export for Vercel
+module.exports = app;
