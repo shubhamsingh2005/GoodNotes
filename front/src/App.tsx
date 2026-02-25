@@ -1,8 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { SpeedInsights } from '@vercel/speed-insights/react'; // Import SpeedInsights for React
-
 // Styles
 import '@/App.css';
 import '@/index.css';
@@ -86,7 +84,6 @@ const App: React.FC = () => {
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
                 <ToastContainer theme="colored" position="bottom-right" />
-                <SpeedInsights /> {/* Add SpeedInsights component here */}
               </div>
             </Router>
           </SidebarProvider>

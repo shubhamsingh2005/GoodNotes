@@ -1,0 +1,8 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { FaTimes, FaCopy } from 'react-icons/fa';
+const ShareModal = ({ isOpen, onClose, shareCode }) => {
+    if (!isOpen)
+        return null;
+    return (_jsx("div", { className: "fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm", children: _jsxs("div", { className: "bg-white dark:bg-gray-800 rounded-xl p-6 shadow-2xl w-full max-w-sm border border-gray-200 dark:border-gray-700 animate-scale-in", children: [_jsxs("div", { className: "flex justify-between items-center mb-4", children: [_jsx("h3", { className: "text-xl font-bold text-gray-800 dark:text-white", children: "Share Note" }), _jsx("button", { onClick: onClose, className: "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300", children: _jsx(FaTimes, {}) })] }), _jsx("p", { className: "text-sm text-gray-500 dark:text-gray-400 mb-4", children: "Use this 4-digit code to let another user access this note." }), _jsxs("div", { className: "flex items-center gap-2 bg-gray-100 dark:bg-gray-900 p-3 rounded-lg mb-4", children: [_jsx("span", { className: "text-3xl font-mono font-bold text-purple-600 tracking-widest flex-1 text-center", children: shareCode || '....' }), _jsx("button", { onClick: () => { navigator.clipboard.writeText(shareCode || ''); alert("Copied!"); }, className: "p-2 text-gray-500 hover:text-purple-600 transition-colors", title: "Copy Code", children: _jsx(FaCopy, {}) })] }), _jsx("button", { onClick: onClose, className: "w-full bg-purple-600 text-white py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors", children: "Done" })] }) }));
+};
+export default ShareModal;
