@@ -16,12 +16,16 @@ import store from '@/redux/store'; // ✅ Use same store as in App.tsx
 // Toasts
 import { Toaster } from 'react-hot-toast';
 
+// Vercel Speed Insights
+import { SpeedInsights } from '@vercel/speed-insights/react';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <DarkModeProvider>
       <Provider store={store}>
         <Toaster position="top-right" reverseOrder={false} />
         <App />
+        <SpeedInsights />
       </Provider>
     </DarkModeProvider>
   </React.StrictMode>
